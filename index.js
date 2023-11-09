@@ -1,4 +1,4 @@
-import connection from "./db.js";
+// import connection from "./db.js";
 import express from "express";
 import bodyParser from "body-parser";
 
@@ -21,18 +21,18 @@ app.use(express.static('public/'));
 app.use('/images', express.static(__dirname + '/uploads'));;
 
 
-connection.connect((err)=>{
-    if (err) {
-        console.error('Database connection failed: ' + err.stack);
-        return;
-    }
+// connection.connect((err)=>{
+//     if (err) {
+//         console.error('Database connection failed: ' + err.stack);
+//         return;
+//     }
 
-    console.log('Connected to MySQL database');
-})
+//     console.log('Connected to MySQL database');
+// })
 
 app.use("/", (req, res)=>{
     try {
-        res.status(200).send(<h1>Hello node.js server</h1>)
+        res.status(200).send("Hello node.js server")
     } catch (error) {
         res.status(500).json({
             error: "Internal server error"
