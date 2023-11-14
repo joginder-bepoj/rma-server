@@ -98,7 +98,7 @@ export const signIn = async (req, res) => {
     // Retrieve user details from the database
     const query = 'SELECT * FROM users WHERE email = ?';
     db.query(query, [email], async (err, results, fields) => {
-    connection.end();
+    db.end();
       if (err) {
         console.error('Error retrieving user:', err);
         return res.status(500).json({ error: 'Internal server error.' });
