@@ -1,10 +1,11 @@
-// import connection from "./db.js";
+import connection from "./db.js";
 import express from "express";
 import bodyParser from "body-parser";
 
 import userRoutes from "./routes/users.js"
 import returnRoutes from "./routes/return.js"
 import productRoutes from "./routes/product.js"
+import testRoutes from "./routes/test.js"
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
@@ -21,24 +22,28 @@ app.use(express.static('public/'));
 app.use('/images', express.static(__dirname + '/uploads'));;
 
 
-// connection.connect((err)=>{
-//     if (err) {
-//         console.error('Database connection failed: ' + err.stack);
-//         return;
-//     }
-
-//     console.log('Connected to MySQL database');
-// })
-
-app.use("/", (req, res)=>{
-    try {
-        res.status(200).send("Hello node.js server")
-    } catch (error) {
-        res.status(500).json({
-            error: "Internal server error"
-        })
+connection.connect(function(err) {
+    if (err) {
+        console.log('Error when connecting to the database:', err);
+        setTimeout(handleDisconnect, 2000);
     }
-})
+    console.log("db is connected")
+});
+function handleDisconnect() {
+
+    connection.on('error', function(err) {
+      console.log('Database error:', err);
+      if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+        handleDisconnect();
+      } else {
+        throw err;
+      }
+    });
+  }
+  
+  handleDisconnect();
+
+app.use("/", testRoutes)
 app.use("/api/users", userRoutes)
 app.use("/api/return", returnRoutes)
 app.use("/api/products", productRoutes) 

@@ -21,7 +21,7 @@ export const returnRequest = (req, res) => {
 
 
         // Check if productId and orderNumber already exist
-        db.query('SELECT * FROM rma.return_request WHERE orderNumber = ?', [orderNumber], (selectErr, selectResults) => {
+        db.query('SELECT * FROM return_request WHERE orderNumber = ?', [orderNumber], (selectErr, selectResults) => {
             if (selectErr) {
                 console.error('Error checking for duplicate entries:', selectErr);
                 return res.status(500).json({ error: 'Internal server error' });
@@ -31,7 +31,7 @@ export const returnRequest = (req, res) => {
                 // If there are duplicate entries, return an error
                 return res.status(400).json({ error: 'Order Number already exists' });
             }
-            const query = 'INSERT INTO rma.return_request ( productName, consumerAccount, productId, productPrice, manufacturer, purchaseDate, returnDate, orderNumber, returnReason, vendorAccount, manufacturerAccount, productImage, consumerName) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            const query = 'INSERT INTO return_request ( productName, consumerAccount, productId, productPrice, manufacturer, purchaseDate, returnDate, orderNumber, returnReason, vendorAccount, manufacturerAccount, productImage, consumerName) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
             const values = [productName, consumerAccount, productId, productPrice, manufacturer, purchaseDate, returnDate, orderNumber, returnReason, vendorAccount, manufacturerAccount, productImage, consumerName]
 
             // If no duplicates found, proceed with the insertion
@@ -41,14 +41,14 @@ export const returnRequest = (req, res) => {
                     return res.status(500).json({ error: 'Internal server error here' });
                 }
 
-                db.query("UPDATE rma.products SET isReturnStarted = '1' WHERE orderNumber = ?", [orderNumber], (err, res) => {
+                db.query("UPDATE products SET isReturnStarted = '1' WHERE orderNumber = ?", [orderNumber], (err, res) => {
                     if (err) {
                         console.error("updating error", err)
                         return res.status(500).json({ error: 'Internal server error here' });
                     }
 
 
-                    const insertQuery = 'INSERT INTO rma.return_images (orderNumber, image_url) VALUES ?';
+                    const insertQuery = 'INSERT INTO return_images (orderNumber, image_url) VALUES ?';
                     const values1 = imageUrls.map(imageUrl => [orderNumber, imageUrl]);
 
                     db.query(insertQuery, [values1], (err, result) => {
@@ -86,7 +86,7 @@ export const addReturnId = (req, res) => {
             return res.status(500).json({ error: 'Internal server error' })
         }
 
-        db.query('UPDATE rma.return_request SET returnId = ? WHERE orderNumber = ?', [returnId, orderNumber], (err, result) => {
+        db.query('UPDATE return_request SET returnId = ? WHERE orderNumber = ?', [returnId, orderNumber], (err, result) => {
             if (err) {
                 console.error('Error updating product status:', err);
                 return res.status(500).json({ error: 'Internal server error' });
@@ -95,7 +95,7 @@ export const addReturnId = (req, res) => {
                 // No rows were updated, indicating that the order number was not found
                 return res.status(404).json({ error: 'Order number not found' });
             }
-            const insertQuery = 'INSERT INTO rma.box_images (orderNumber, img_url) VALUES (?, ?)';
+            const insertQuery = 'INSERT INTO box_images (orderNumber, img_url) VALUES (?, ?)';
             const values = [orderNumber, imageUrl];
 
             db.query(insertQuery, values, (err, result) => {
@@ -119,7 +119,7 @@ export const updateReturnStatus = (req, res) => {
         const returnId = req.params.returnRequestId;
         const { status, location } = req.body;
 
-        const updateQuery = 'UPDATE rma.return_request SET status = ?, location = ? WHERE returnId = ?';
+        const updateQuery = 'UPDATE return_request SET status = ?, location = ? WHERE returnId = ?';
 
         db.query(updateQuery, [status, location, returnId], (updateErr, updateResult) => {
             if (updateErr) {
@@ -147,7 +147,7 @@ export const getReturnStatus = (req, res) => {
 
     try {
         // Query the most recent status update for the specified return request
-        db.query('SELECT * FROM rma.return_request WHERE returnId = ?', [returnRequestId], (err, results) => {
+        db.query('SELECT * FROM return_request WHERE returnId = ?', [returnRequestId], (err, results) => {
             if (err) {
                 console.error('Error fetching return request status:', err);
                 return res.status(500).json({ error: 'Internal server error' });
@@ -157,7 +157,7 @@ export const getReturnStatus = (req, res) => {
                 return res.status(404).json({ error: 'Return request not found' });
             }
 
-            db.query("SELECT * FROM rma.box_images WHERE orderNumber = ?", [results[0].orderNumber], (err, boxImgs)=>{
+            db.query("SELECT * FROM box_images WHERE orderNumber = ?", [results[0].orderNumber], (err, boxImgs)=>{
                 if (err) {
                     console.error('Error fetching consumer box image:', err);
                     return res.status(500).json({ error: 'Internal server error' });
@@ -166,7 +166,7 @@ export const getReturnStatus = (req, res) => {
                     return res.status(404).json({ error: 'Images not found' });
                 }
 
-                db.query("SELECT * FROM rma.return_images WHERE orderNumber = ?", [results[0].orderNumber], (err, consumerImgs)=>{
+                db.query("SELECT * FROM return_images WHERE orderNumber = ?", [results[0].orderNumber], (err, consumerImgs)=>{
                     if (err) {
                         console.error('Error fetching consumer product image:', err);
                         return res.status(500).json({ error: 'Internal server error' });
@@ -191,7 +191,7 @@ export const getAllReturnsConsumer = (req, res) => {
         const accountNumber = req.params.accountNumber;
 
         db.query(
-            'SELECT * FROM rma.return_request WHERE consumerAccount = ? AND returnId IS NOT NULL',
+            'SELECT * FROM return_request WHERE consumerAccount = ? AND returnId IS NOT NULL',
             [accountNumber],
             (err, results) => {
                 if (err) {
@@ -221,11 +221,11 @@ export const getReturnsForVendor = (req, res) => {
         let sql;
 
         if (option === 'UDID') {
-            sql = 'SELECT * FROM rma.return_request WHERE returnId = ?';
+            sql = 'SELECT * FROM return_request WHERE returnId = ?';
         } else if (option === 'name') {
-            sql = 'SELECT * FROM rma.return_request WHERE consumerName = ?';
+            sql = 'SELECT * FROM return_request WHERE consumerName = ?';
         } else if (option === 'accountNumber') {
-            sql = 'SELECT * FROM rma.return_request WHERE consumerAccount = ?';
+            sql = 'SELECT * FROM return_request WHERE consumerAccount = ?';
         } else {
             res.status(400).json({ error: 'Invalid option' });
             return;
@@ -242,13 +242,13 @@ export const getReturnsForVendor = (req, res) => {
             let orderNumber = results[0].orderNumber
            
 
-            db.query('SELECT * FROM rma.return_images WHERE orderNumber = ?', [orderNumber], (err, result) => {
+            db.query('SELECT * FROM return_images WHERE orderNumber = ?', [orderNumber], (err, result) => {
                 if (err) {
                     console.error('Error fetching return request images:', err);
                     return res.status(500).json({ error: 'Internal server error' });
                 }
 
-                db.query('SELECT * FROM rma.box_images WHERE orderNumber = ?', [orderNumber], (err, images) => {
+                db.query('SELECT * FROM box_images WHERE orderNumber = ?', [orderNumber], (err, images) => {
                     if (err) {
                     console.error('Error fetching return request images:', err);
                     return res.status(500).json({ error: 'Internal server error' });
@@ -271,7 +271,7 @@ export const getReturnsForManufacurer = (req, res) => {
     try {
         const value = req.params.value;
 
-        let sql = 'SELECT * FROM rma.return_request WHERE returnId = ?';
+        let sql = 'SELECT * FROM return_request WHERE returnId = ?';
 
         // Perform the MySQL query
         db.query(sql, [value], (err, results) => {
@@ -281,7 +281,7 @@ export const getReturnsForManufacurer = (req, res) => {
                 return;
             }
 
-            db.query("SELECT * FROM rma.return_images WHERE orderNumber = ?", [results[0]?.orderNumber], (err, consumerImgs)=>{
+            db.query("SELECT * FROM return_images WHERE orderNumber = ?", [results[0]?.orderNumber], (err, consumerImgs)=>{
                 if (err) {
                     console.error('Error fetching consumer product image:', err);
                     return res.status(500).json({ error: 'Internal server error' });
@@ -290,7 +290,7 @@ export const getReturnsForManufacurer = (req, res) => {
                     return res.status(404).json({ error: 'Images not found' });
                 }
 
-                db.query("SELECT * FROM rma.box_images WHERE orderNumber = ?", [results[0]?.orderNumber], (err, boxImgs)=>{
+                db.query("SELECT * FROM box_images WHERE orderNumber = ?", [results[0]?.orderNumber], (err, boxImgs)=>{
                     if (err) {
                         console.error('Error fetching consumer box image:', err);
                         return res.status(500).json({ error: 'Internal server error' });
@@ -299,7 +299,7 @@ export const getReturnsForManufacurer = (req, res) => {
                         return res.status(404).json({ error: 'Images not found' });
                     }
 
-                    db.query("SELECT * FROM rma.vendors_package WHERE returnId = ?", [value], (err, vendorsItemImg)=>{
+                    db.query("SELECT * FROM vendors_package WHERE returnId = ?", [value], (err, vendorsItemImg)=>{
                         if (err) {
                             console.error('Error fetching vendors open box images:', err);
                             return res.status(500).json({ error: 'Internal server error' });
@@ -325,7 +325,7 @@ export const getReturnProductByOrder = (req, res) => {
 
     try {
         // Query the most recent status update for the specified return request
-        db.query('SELECT * FROM rma.return_request WHERE orderNumber = ?', [orderNumber], (err, results) => {
+        db.query('SELECT * FROM return_request WHERE orderNumber = ?', [orderNumber], (err, results) => {
             if (err) {
                 console.error('Error fetching return request status:', err);
                 return res.status(500).json({ error: 'Internal server error' });
@@ -335,7 +335,7 @@ export const getReturnProductByOrder = (req, res) => {
                 return res.status(404).json({ error: 'Return request not found' });
             }
 
-            db.query('SELECT * FROM rma.return_images WHERE orderNumber = ?', [orderNumber], (err, result) => {
+            db.query('SELECT * FROM return_images WHERE orderNumber = ?', [orderNumber], (err, result) => {
                 if (err) {
                     console.error('Error fetching return request images:', err);
                     return res.status(500).json({ error: 'Internal server error' });
@@ -393,7 +393,7 @@ export const vendorsUpdateReturn = (req, res) =>{
     });
 
     try {
-        const sql = ` UPDATE rma.return_request SET vendorOpenPackageDesc = ?, vendorsInspectDesc = ?, status = ?, isVendorAccepted = ?, vendorAcceptTime = ? WHERE returnId = ?;`;
+        const sql = ` UPDATE return_request SET vendorOpenPackageDesc = ?, vendorsInspectDesc = ?, status = ?, isVendorAccepted = ?, vendorAcceptTime = ? WHERE returnId = ?;`;
 
         db.query(sql, [vendorOpenPackageDesc, vendorsInspectDesc, status, isVendorAccepted, vendorAcceptTime, returnId], (error, results) => {
             if (error) {
@@ -401,7 +401,7 @@ export const vendorsUpdateReturn = (req, res) =>{
                 return res.status(500).json({ error: 'Internal server error' })
             }
 
-            const insertQuery = 'INSERT INTO rma.vendor_ups (returnId, img_url) VALUES ?';
+            const insertQuery = 'INSERT INTO vendor_ups (returnId, img_url) VALUES ?';
             const values1 = upsImages.map(imageUrl => [returnId, imageUrl]);
             db.query(insertQuery, [values1], (err, result) => {
                 if (err) {
@@ -410,7 +410,7 @@ export const vendorsUpdateReturn = (req, res) =>{
                 }
 
             });
-            const insertQuery2 = 'INSERT INTO rma.vendors_box (returnId, img_url) VALUES ?';
+            const insertQuery2 = 'INSERT INTO vendors_box (returnId, img_url) VALUES ?';
             const values2 = extImages.map(imageUrl => [returnId, imageUrl]);
             db.query(insertQuery2, [values2], (err, result) => {
                 if (err) {
@@ -419,7 +419,7 @@ export const vendorsUpdateReturn = (req, res) =>{
                 }
 
             });
-            const insertQuery3 = 'INSERT INTO rma.vendors_open_package (returnId, img_url) VALUES ?';
+            const insertQuery3 = 'INSERT INTO vendors_open_package (returnId, img_url) VALUES ?';
             const values3 = openImages.map(imageUrl => [returnId, imageUrl]);
             db.query(insertQuery3, [values3], (err, result) => {
                 if (err) {
@@ -428,7 +428,7 @@ export const vendorsUpdateReturn = (req, res) =>{
                 }
 
             });
-            const insertQuery4 = 'INSERT INTO rma.vendors_package (returnId, img_url) VALUES ?';
+            const insertQuery4 = 'INSERT INTO vendors_package (returnId, img_url) VALUES ?';
             const values4 = inspectImages.map(imageUrl => [returnId, imageUrl]);
             db.query(insertQuery4, [values4], (err, result) => {
                 if (err) {
@@ -465,7 +465,7 @@ export const vendorsReturnReject = (req, res) =>{
     }
 
     try {
-        const sql = `UPDATE rma.return_request SET vendorReject = ?, status = ?, isVendorReject = ?, vendorAcceptTime = ? WHERE returnId = ?;`;
+        const sql = `UPDATE return_request SET vendorReject = ?, status = ?, isVendorReject = ?, vendorAcceptTime = ? WHERE returnId = ?;`;
 
         db.query(sql, [vendorReject, status, isVendorReject, vendorAcceptTime, returnId], (error, results) => {
             if (error) {
@@ -473,7 +473,7 @@ export const vendorsReturnReject = (req, res) =>{
                 return res.status(500).json({ error: 'Internal server error' })
             }
 
-            const insertQuery = 'INSERT INTO rma.vendors_reject_imgs (returnId, img_url) VALUES ?';
+            const insertQuery = 'INSERT INTO vendors_reject_imgs (returnId, img_url) VALUES ?';
             const values1 = imageUrls.map(imageUrl => [returnId, imageUrl]);
             db.query(insertQuery, [values1], (err, result) => {
                 if (err) {
@@ -496,7 +496,7 @@ export const getReturnStatusVendors = (req, res) =>{
     try {
 
         // Query the most recent status update for the specified return request
-        db.query('SELECT * FROM rma.return_request WHERE returnId = ?', [returnId], (err, results) => {
+        db.query('SELECT * FROM return_request WHERE returnId = ?', [returnId], (err, results) => {
             if (err) {
                 console.error('Error fetching return request status:', err);
                 return res.status(500).json({ error: 'Internal server error' });
@@ -506,7 +506,7 @@ export const getReturnStatusVendors = (req, res) =>{
             }
    
             // consumer box photos
-            db.query("SELECT * FROM rma.box_images WHERE orderNumber = ?", [results[0].orderNumber], (err, boxImgs)=>{
+            db.query("SELECT * FROM box_images WHERE orderNumber = ?", [results[0].orderNumber], (err, boxImgs)=>{
                 if (err) {
                     console.error('Error fetching consumer box image:', err);
                     return res.status(500).json({ error: 'Internal server error' });
@@ -515,7 +515,7 @@ export const getReturnStatusVendors = (req, res) =>{
                     return res.status(404).json({ error: 'Images not found' });
                 }
 
-                db.query("SELECT * FROM rma.return_images WHERE orderNumber = ?", [results[0].orderNumber], (err, consumerImgs)=>{
+                db.query("SELECT * FROM return_images WHERE orderNumber = ?", [results[0].orderNumber], (err, consumerImgs)=>{
                     if (err) {
                         console.error('Error fetching consumer product image:', err);
                         return res.status(500).json({ error: 'Internal server error' });
@@ -524,7 +524,7 @@ export const getReturnStatusVendors = (req, res) =>{
                         return res.status(404).json({ error: 'Images not found' });
                     }
 
-                    db.query("SELECT * FROM rma.vendors_box WHERE returnId = ?", [returnId], (err, vendorBoximgs)=>{
+                    db.query("SELECT * FROM vendors_box WHERE returnId = ?", [returnId], (err, vendorBoximgs)=>{
                         if (err) {
                             console.error('Error fetching vendors product box image:', err);
                             return res.status(500).json({ error: 'Internal server error' });
@@ -533,7 +533,7 @@ export const getReturnStatusVendors = (req, res) =>{
                             return res.status(404).json({ error: 'Images not found' });
                         }
 
-                        db.query("SELECT * FROM rma.vendors_open_package WHERE returnId = ?", [returnId], (err, vendorsOpenBox)=>{
+                        db.query("SELECT * FROM vendors_open_package WHERE returnId = ?", [returnId], (err, vendorsOpenBox)=>{
                             if (err) {
                                 console.error('Error fetching vendors open box images:', err);
                                 return res.status(500).json({ error: 'Internal server error' });
@@ -542,7 +542,7 @@ export const getReturnStatusVendors = (req, res) =>{
                                 return res.status(404).json({ error: 'Images not found' });
                             }
 
-                            db.query("SELECT * FROM rma.vendors_package WHERE returnId = ?", [returnId], (err, vendorsItemImg)=>{
+                            db.query("SELECT * FROM vendors_package WHERE returnId = ?", [returnId], (err, vendorsItemImg)=>{
                                 if (err) {
                                     console.error('Error fetching vendors open box images:', err);
                                     return res.status(500).json({ error: 'Internal server error' });
@@ -568,7 +568,7 @@ export const getReturnStatusVendors = (req, res) =>{
 export const getAllReturnsManufacturer = (req, res) =>{
     const accountNumber = req?.params.accountNumber
     try {
-        db.query("SELECT * FROM rma.return_request WHERE manufacturerAccount = ? AND isVendorAccepted = 1 AND isReturnComplete = 0", [accountNumber], (err, result)=>{
+        db.query("SELECT * FROM return_request WHERE manufacturerAccount = ? AND isVendorAccepted = 1 AND isReturnComplete = 0", [accountNumber], (err, result)=>{
             if (err) {
                 console.error('Error fetching return request status:', err);
                 return res.status(500).json({ error: 'Internal server error' });
@@ -620,7 +620,7 @@ export const getAllReturnsManufacturer = (req, res) =>{
 export const getAllReturnsVendor = (req, res) =>{
     const accountNumber = req.params.accountNumber;
     try {
-        db.query("SELECT * FROM rma.return_request WHERE vendorAccount = ? AND isVendorAccepted = 0", [accountNumber], (err, result)=>{
+        db.query("SELECT * FROM return_request WHERE vendorAccount = ? AND isVendorAccepted = 0", [accountNumber], (err, result)=>{
             if (err) {
                 console.error('Error fetching return request status:', err);
                 return res.status(500).json({ error: 'Internal server error' });
@@ -650,7 +650,7 @@ export const updateManufacturerReturn = (req, res) =>{
     let status = "manufacturer accepeted"
 
     try {
-        const sql = `UPDATE rma.return_request SET isManufacturerAccepted = ?, manufacturerAcceptedTime =?, status = ? WHERE returnId = ?;`
+        const sql = `UPDATE return_request SET isManufacturerAccepted = ?, manufacturerAcceptedTime =?, status = ? WHERE returnId = ?;`
         db.query(sql, [isManufacturerAccepted, manufacturerAcceptedTime, status, returnId], (error, results) => {
             if (error) {
                 console.error('Error updating data:', error);
@@ -673,11 +673,11 @@ export const returnHistory = (req, res) =>{
     try {
         let sql;
         if(userType === "consumer"){
-            sql = "SELECT * FROM rma.return_request WHERE consumerAccount = ? AND isReturnComplete = 1;"
+            sql = "SELECT * FROM return_request WHERE consumerAccount = ? AND isReturnComplete = 1;"
         }else if(userType === "vendor"){
-            sql = "SELECT * FROM rma.return_request WHERE vendorAccount = ? AND isReturnComplete = 1;"
+            sql = "SELECT * FROM return_request WHERE vendorAccount = ? AND isReturnComplete = 1;"
         }else if(userType === "manufacturer"){
-            sql= "SELECT * FROM rma.return_request WHERE manufacturerAccount = ? AND isReturnComplete = 1;"
+            sql= "SELECT * FROM return_request WHERE manufacturerAccount = ? AND isReturnComplete = 1;"
         }
 
         db.query(sql, [userAccount], (err, result)=>{

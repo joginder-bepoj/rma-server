@@ -16,12 +16,11 @@ export const signUp = async (req, res, next) => {
 
 
   try {
-    const query = 'SELECT * FROM rma.users WHERE email = ?';
+    const query = 'SELECT * FROM users WHERE email = ?';
     db.query(query, [email], (err, results) => {
       if (err) {
         console.error('Error checking for existing user: ' + err);
         return res.status(500).json({ error: 'Error checking for existing user' });
-        
       }
 
       if (results.length > 0) {
@@ -31,7 +30,7 @@ export const signUp = async (req, res, next) => {
       }
 
 
-      const userNameQuery = 'SELECT * FROM rma.users WHERE userName = ?';
+      const userNameQuery = 'SELECT * FROM users WHERE userName = ?';
       db.query(userNameQuery, [userName], (err, results) => {
         if (err) {
           console.error('Error checking for existing userName: ' + err);
@@ -46,7 +45,7 @@ export const signUp = async (req, res, next) => {
           return;
         }
 
-        const userMobile = 'SELECT * FROM rma.users WHERE mobileNumber = ?';
+        const userMobile = 'SELECT * FROM users WHERE mobileNumber = ?';
         db.query(userMobile, [mobileNumber], (err, results) => {
           if (err) {
             console.error('Error checking for existing mobile number: ' + err);
@@ -66,7 +65,7 @@ export const signUp = async (req, res, next) => {
   
 
           // Insert the user into the database
-          const insertQuery = 'INSERT INTO rma.users (name, email, otp, password, userType, address, city, state, zipcode, mobileNumber, accountNumber, userName, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+          const insertQuery = 'INSERT INTO users (name, email, otp, password, userType, address, city, state, zipcode, mobileNumber, accountNumber, userName, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
           const values = [name, email, otp, hash, userType, address, city, state, zipcode, mobileNumber, account, userName, expirationTime];
           db.query(insertQuery, values, (err, result) => {
             if (err) {
@@ -93,11 +92,11 @@ export const signUp = async (req, res, next) => {
 
 export const signIn = async (req, res) => {
   const { email, password } = req.body;
-
+ console.log(req.body)
 
   try {
     // Retrieve user details from the database
-    const query = 'SELECT * FROM rma.users WHERE email = ?';
+    const query = 'SELECT * FROM users WHERE email = ?';
     db.query(query, [email], async (err, results) => {
       if (err) {
         console.error('Error retrieving user:', err);
@@ -147,7 +146,7 @@ export const updateOtp = async (req, res) => {
   const expirationTime = new Date();
   expirationTime.setMinutes(expirationTime.getMinutes() + 15); // OTP expiration time (15 minutes)
 
-  const insertQuery = 'INSERT INTO rma.users (email, otp, expires_at) VALUES (?, ?, ?)';
+  const insertQuery = 'INSERT INTO users (email, otp, expires_at) VALUES (?, ?, ?)';
   db.query(insertQuery, [email, otp, expirationTime], (err, result) => {
     if (err) {
       console.error('Error inserting OTP request:', err);
@@ -165,7 +164,7 @@ export const forgetPassword = async (req, res) => {
   const { email, otp, newPassword } = req.body;
   const now = new Date();
 
-  const selectQuery = 'SELECT * FROM rma.users WHERE email = ? AND otp = ? AND expires_at > ?';
+  const selectQuery = 'SELECT * FROM users WHERE email = ? AND otp = ? AND expires_at > ?';
   db.query(selectQuery, [email, otp, now], (err, results) => {
     if (err) {
       console.error('Error verifying OTP:', err);
@@ -176,7 +175,7 @@ export const forgetPassword = async (req, res) => {
       return res.status(401).json({ error: 'Invalid OTP or OTP expired' });
     }
 
-    const updateQuery = 'UPDATE rma.users SET password = ? WHERE email = ?';
+    const updateQuery = 'UPDATE users SET password = ? WHERE email = ?';
     db.query(updateQuery, [hashedPassword, email], (err, result) => {
       if (err) {
         console.error('Error updating password:', err);
@@ -206,7 +205,7 @@ export const verify = async (req, res) => {
     const now = new Date();
 
     // Retrieve user details from the database
-    const query = 'SELECT * FROM rma.users WHERE email = ?';
+    const query = 'SELECT * FROM users WHERE email = ?';
     db.query(query, [email], async (err, results) => {
       if (err) {
         console.error('Error retrieving user:', err);
@@ -217,7 +216,7 @@ export const verify = async (req, res) => {
         return res.status(404).json({ error: 'User not found.' });
       }
 
-      const selectQuery = 'SELECT * FROM rma.users WHERE email = ? AND otp = ? AND expires_at > ?';
+      const selectQuery = 'SELECT * FROM users WHERE email = ? AND otp = ? AND expires_at > ?';
       db.query(selectQuery, [email, otp, now], (err, results) => {
         if (err) {
           console.error('Error verifying OTP:', err);
@@ -228,7 +227,7 @@ export const verify = async (req, res) => {
           return res.status(401).json({ error: 'Invalid OTP or OTP expired' });
         }
 
-        const updateQuery = 'UPDATE rma.users SET isOtpVerified = ? WHERE email = ?';
+        const updateQuery = 'UPDATE users SET isOtpVerified = ? WHERE email = ?';
         const values = [true, email];
         db.query(updateQuery, values, (err, result) => {
           if (err) {

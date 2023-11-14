@@ -68,7 +68,7 @@ export const createProduct = async (req, res) => {
         const lastReturnDate = new Date(today.getTime() + productTypeEntry.returnTime * 24 * 60 * 60 * 1000);
 
         db.query(
-            'INSERT INTO rma.products (productName, productId, productPrice, description, productImageURL, manufacturer, manufacturerAccount, vendor, vendorAccount, productType, returnType, lastdateToReturn, consumerAccount, consumer, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO products (productName, productId, productPrice, description, productImageURL, manufacturer, manufacturerAccount, vendor, vendorAccount, productType, returnType, lastdateToReturn, consumerAccount, consumer, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [productName, productId, productPrice, description, productImageURL, manufacturer, manufacturerAccount, vendor, vendorAccount, productType, returnType, lastReturnDate, consumerAccount, consumer, date],
             (err, result) => {
                 if (err) {
@@ -90,7 +90,7 @@ export const getProductsByUser =  (req, res) => {
   
       // MySQL query to retrieve product data based on accountNumber
       db.query(
-        'SELECT * FROM rma.products WHERE consumerAccount = ?',
+        'SELECT * FROM products WHERE consumerAccount = ?',
         [accountNumber],
         (err, results) => {
           if (err) {
@@ -125,7 +125,7 @@ export const getSingleProduct = (req, res) =>{
     const orderNumber = req.params.orderNumber;
 
     db.query(
-      'SELECT * FROM rma.products WHERE orderNumber = ?',
+      'SELECT * FROM products WHERE orderNumber = ?',
       [orderNumber],
       (err, results) => {
         if (err) {
