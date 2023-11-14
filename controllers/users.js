@@ -125,7 +125,7 @@ export const signIn = async (req, res) => {
         { expiresIn: '10h' }
       );
 
-      
+      connection.end();
 
       res.status(200).json({
         result: user,
