@@ -97,7 +97,8 @@ export const signIn = async (req, res) => {
   try {
     // Retrieve user details from the database
     const query = 'SELECT * FROM users WHERE email = ?';
-    db.query(query, [email], async (err, results) => {
+    db.query(query, [email], async (err, results, fields) => {
+    connection.end();
       if (err) {
         console.error('Error retrieving user:', err);
         return res.status(500).json({ error: 'Internal server error.' });
@@ -106,6 +107,13 @@ export const signIn = async (req, res) => {
       if (results.length === 0) {
         return res.status(404).json({ message: 'No user found with this email address' });
       }
+       if (error.fatal) {
+      // Implement reconnection logic before executing further queries
+      console.error('Attempting to reconnect...');
+
+      // Example reconnection logic:
+      // connection.connect(); // You might need to check if the connection is already connected before attempting to reconnect.
+    }
 
       const user = results[0];
 
@@ -125,7 +133,7 @@ export const signIn = async (req, res) => {
         { expiresIn: '10h' }
       );
 
-      connection.end();
+      
 
       res.status(200).json({
         result: user,
