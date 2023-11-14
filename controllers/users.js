@@ -92,7 +92,6 @@ export const signUp = async (req, res, next) => {
 
 export const signIn = async (req, res) => {
   const { email, password } = req.body;
- console.log(req.body)
 
   try {
     // Retrieve user details from the database
@@ -107,13 +106,6 @@ export const signIn = async (req, res) => {
       if (results.length === 0) {
         return res.status(404).json({ message: 'No user found with this email address' });
       }
-       if (error.fatal) {
-      // Implement reconnection logic before executing further queries
-      console.error('Attempting to reconnect...');
-
-      // Example reconnection logic:
-      // connection.connect(); // You might need to check if the connection is already connected before attempting to reconnect.
-    }
 
       const user = results[0];
 
