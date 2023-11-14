@@ -4,7 +4,6 @@ import { signIn, signUp, verify } from "../controllers/users.js";
 
 const router = express.Router()
 
-console.log("working or not")
 
 router.post("/signup", signUp)
 // router.post("/signin", signIn)
